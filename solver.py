@@ -88,11 +88,12 @@ class Wordle_Solver():
           print(self.black_letters, "black", consider + ": dropped")
   # Keep a word if it contains all of the yellow letters in any position
   # and all of the green letters in matching positions
-      elif not (self.matches_yellow_patterns(consider) \
-       and self.matches_green_pattern(consider)):
+      elif not (self.matches_yellow_patterns(consider):
         if self.debug:
-          print(self.yellow_patterns, "yellow", consider,
-                self.green_pattern, "green", consider + ": dropped")
+          print(self.yellow_patterns, "yellow", consider + ": dropped")
+      elif not self.matches_green_pattern(consider)):
+        if self.debug:
+          print(self.green_pattern, "green", consider + ": dropped")
       else:
         print(consider)
   #
