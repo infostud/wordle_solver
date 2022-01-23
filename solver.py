@@ -11,10 +11,17 @@ class Wordle_Solver():
     if bl:
       self.grey_letters.update(bl)
 # Pattern of letters found but not in the right position
-    self.yellow_patterns = yp
+    if yp: # not None
+      if type(yp) == type(list):
+        self.yellow_patterns = yp
+      else:
+        self.yellow_patterns = [yp]
+    else:
+      self.yellow_patterns = None
 # Pattern of letters found and in the right position
     self.green_pattern = gp
     words = []
+
     with open(wf) as wordfile:
       for line in wordfile:
         word = line.strip()
@@ -39,11 +46,15 @@ class Wordle_Solver():
     match: Bool = False
     if self.debug:
       print("Yellow patterns:", self.yellow_patterns)
-    if len(self.yellow_patterns) > 0:
+    if self.yellow_patterns:
       for pattern in self.yellow_patterns:
         if self.debug:
           print(consider, '"', pattern, '"')
         match = match or self.matches_yellow_pattern(consider, pattern)
+    else:
+      if self.debug:
+        print(consider, "no yellow patterns to test")
+        match = False
     return match
 #
   def matches_yellow_pattern(self, consider, pattern):
@@ -57,7 +68,7 @@ class Wordle_Solver():
     matches: int = 0 # count of matches but not in the same position
     same_position: bool = False # Found a yellow letter in the same position
     assert len(consider) == WORDLE_LEN
-    assert len(pattern) == WORDLE_LEN
+    assert len(pattern) == WORDLE_LEN, pattern
     
     for i in range(0, WORDLE_LEN):
       if consider[i] == pattern[i]:
@@ -97,11 +108,15 @@ class Wordle_Solver():
 #
   def print_candidates(self):
     import string
-    green: bool
+    possible: bool = True
     for consider in self.solution_list:
-      if not self.has_grey_letters(consider):
-        if self.matches_yellow_patterns(consider) \
-           and self.matches_green_pattern(consider):
+      if self.grey_letters:
+        possible = not self.has_grey_letters(consider)
+      if possible and self.yellow_patterns:
+          possible = self.matches_yellow_patterns(consider)
+      if possible and self.green_pattern:
+          possible = self.matches_green_pattern(consider)
+      if possible:
           print("Possible:", consider)
   #
   def solve(self):
@@ -110,8 +125,8 @@ class Wordle_Solver():
 def main(argv):
   import sys, getopt
   debug: Bool = False
-  grey_letters = ''
-  yellow_pattern = ["_____"]
+  #grey_letters = ''
+  #yellow_pattern = ["_____"]
   #green_pattern = "_____"
   wordsfile = "/usr/share/dict/words"
   try:
