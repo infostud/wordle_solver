@@ -9,7 +9,8 @@ grey, yellow, or green.""")
   ap.add_argument("-v", "--verbosity", help="increase output verbosity",
                   default=0, action="count")
   ap.add_argument("-b", "--grey", help="grey letter string", type=str)
-  ap.add_argument("-y", "--yellow", help="yellow letter pattern", type=str)
+  ap.add_argument("-y", "--yellow", help="yellow letter pattern", type=str,
+                  action="append") # allow several -y "pattern"
   ap.add_argument("-g", "--green", help="green letter pattern", type=str)
   ap.add_argument("-f", "--guessfile", default="guesses.txt", type=str,
                   help="file containings guesses")
@@ -26,7 +27,7 @@ grey, yellow, or green.""")
     print("guessfile:", args.guessfile)
 #
   solve = solver.Wordle_Solver(args.verbosity,
-          args.grey, [args.yellow], args.green, args.guessfile)
+          args.grey, args.yellow, args.green, args.guessfile)
   solve.solve()
 #
 if __name__ == "__main__":
