@@ -8,7 +8,8 @@ class Wordle_Solver():
     self.debug = d
 # Collection of letters not in the Wordle
     self.grey_letters = set()
-    self.grey_letters.update(bl)
+    if bl:
+      self.grey_letters.update(bl)
 # Pattern of letters found but not in the right position
     self.yellow_patterns = yp
 # Pattern of letters found and in the right position
@@ -36,8 +37,12 @@ class Wordle_Solver():
 #
   def matches_yellow_patterns(self, consider):
     match: Bool = False
+    if self.debug:
+      print("Yellow patterns:", self.yellow_patterns)
     if len(self.yellow_patterns) > 0:
       for pattern in self.yellow_patterns:
+        if self.debug:
+          print(consider, '"', pattern, '"')
         match = match or self.matches_yellow_pattern(consider, pattern)
     return match
 #
@@ -95,11 +100,9 @@ class Wordle_Solver():
     green: bool
     for consider in self.solution_list:
       if not self.has_grey_letters(consider):
-        green = self.matches_green_pattern(consider)
-        if green:
-          print("Green:", consider)
-        if not green and self.matches_yellow_patterns(consider):
-          print("Yellow:", consider)
+        if self.matches_yellow_patterns(consider) \
+           and self.matches_green_pattern(consider):
+          print("Possible:", consider)
   #
   def solve(self):
     guess = self.print_candidates()
