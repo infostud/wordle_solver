@@ -20,7 +20,7 @@ class Wordle_Solver():
         if len(word) == WORDLE_LEN and word[0] in string.ascii_lowercase:
           words.append(word)
           #print('|' + word + '|')
-    self.good_list = words
+    self.solution_list = words
 #
   def has_grey_letters(self, consider):
     found: bool = False
@@ -50,14 +50,15 @@ class Wordle_Solver():
     """
 #
     matches: int = 0 # count of matches but not in the same position
-    same_position: bool = False
+    same_position: bool = False # Found a yellow letter in the same position
     assert len(consider) == WORDLE_LEN
     assert len(pattern) == WORDLE_LEN
     
     for i in range(0, WORDLE_LEN):
       if consider[i] == pattern[i]:
         if self.debug:
-          print(consider[i], "in the same position", pattern, "dropped")
+          print(consider[i], "in the same position", pattern,
+                consider, "dropped")
         same_position = True
         break # short-circuit loop
     #
@@ -76,28 +77,29 @@ class Wordle_Solver():
 #
   def matches_green_pattern(self, consider):
     match: int = 0
-    green_length = 0
+    green_length: int = 0
+    assert len(self.green_pattern) == WORDLE_LEN
     for i in range(0, WORDLE_LEN):
       if self.green_pattern[i] != '_':
         green_length += 1
-      if consider[i] == self.green_pattern[i]:
-        match += 1
+        if consider[i] == self.green_pattern[i]:
+          match += 1
     if match != green_length and self.debug:
-      print(consider, "no green:", self.green_pattern, "dropped")
-    return match == green_length
+      print(consider, "no green letters:", self.green_pattern, "dropped")
+      return False
+    else:
+      return match == green_length
 #
   def print_candidates(self):
     import string
-    grey: Bool = False
-    yellow: Bool = False
-    green: Bool = False
-    for consider in self.good_list:
+    green: bool
+    for consider in self.solution_list:
       if not self.has_grey_letters(consider):
-        if not self.matches_yellow_patterns(consider):
-          if self.matches_green_pattern(consider):
-            print("Possible:", consider)
-        else:
-          print("Possible:", consider)
+        green = self.matches_green_pattern(consider)
+        if green:
+          print("Green:", consider)
+        if not green and self.matches_yellow_patterns(consider):
+          print("Yellow:", consider)
   #
   def solve(self):
     guess = self.print_candidates()
@@ -105,7 +107,10 @@ class Wordle_Solver():
 def main(argv):
   import sys, getopt
   debug: Bool = False
-  yellow_pattern = []
+  grey_letters = ''
+  yellow_pattern = ["_____"]
+  #green_pattern = "_____"
+  wordsfile = "/usr/share/dict/words"
   try:
 # Parse options, drop program name.
     opts, args = getopt.getopt(argv[1:], "hdb:y:g:w:")
