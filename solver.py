@@ -28,44 +28,51 @@ class Wordle_Solver():
     for i in range(0, WORDLE_LEN):
       if consider[i] in self.grey_letters:
         found = True
-    if not found and self.debug:
-      print(consider, "grey:", self.grey_letters, "dropped")
+        break # short-cut loop
+    if found and self.debug:
+      print(consider, "has one or more grey letters:",
+            self.grey_letters, "dropped")
     return found
 #
   def matches_yellow_patterns(self, consider):
     match: Bool = False
-    if len(self.yellow_patterns) == 0:
-      return match
-    for p in self.yellow_patterns:
-      match = match or self.matches_yellow_pattern(consider, p)
+    if len(self.yellow_patterns) > 0:
+      for pattern in self.yellow_patterns:
+        match = match or self.matches_yellow_pattern(consider, pattern)
     return match
 #
   def matches_yellow_pattern(self, consider, pattern):
-    match: int = 0
-    unique_letters: list = []
+    """
+    Make a list of unique letters from the pattern and return False 
+    if the word doesn't have any of these letters.
+    Return False if the word does have one or more letters in the pattern
+    but in the same position. The letters would be green.
+    """
+#
+    matches: int = 0 # count of matches but not in the same position
+    same_position: bool = False
     assert len(consider) == WORDLE_LEN
+    assert len(pattern) == WORDLE_LEN
+    
     for i in range(0, WORDLE_LEN):
-      if pattern[i] != '_' \
-        and pattern[i] not in unique_letters:
-        unique_letters.append(pattern[i])
-      # Character not in this yellow pattern
-    unique_length = len(unique_letters)
-    i = 0
-    while i < WORDLE_LEN:
       if consider[i] == pattern[i]:
         if self.debug:
-          print(consider[i], "same", self.yellow_patterns)
-      elif consider[i] in unique_letters:
-        if self.debug:
-          print(consider[i], "in", unique_letters)
-        match += 1 # found in a different position
-        if self.debug:
-          print(consider[i], "contained in", unique_letters)
-        del unique_letters[unique_letters.index(consider[i])]
-      i += 1
-    if self.debug:
-      print(consider, "yellow:", self.yellow_patterns, "dropped")
-    return match == unique_length
+          print(consider[i], "in the same position", pattern, "dropped")
+        same_position = True
+        break # short-circuit loop
+    #
+    if not same_position:
+      unique_letters = set(pattern) # a set of unique letters from a string
+      unique_letters.remove('_') # remove the fill character
+
+      for i in range(0, WORDLE_LEN):
+        if consider[i] in unique_letters:
+          if self.debug:
+            print(consider[i], "contained in", unique_letters)
+          matches += 1 # found in a different position
+      return matches > 0
+    else:
+      False
 #
   def matches_green_pattern(self, consider):
     match: int = 0
@@ -76,27 +83,21 @@ class Wordle_Solver():
       if consider[i] == self.green_pattern[i]:
         match += 1
     if match != green_length and self.debug:
-      print(consider, "green:", self.green_pattern, "dropped")
+      print(consider, "no green:", self.green_pattern, "dropped")
     return match == green_length
 #
   def print_candidates(self):
     import string
-    possible = ""
+    grey: Bool = False
+    yellow: Bool = False
+    green: Bool = False
     for consider in self.good_list:
-  # A word is a possible solution
-  #   if it doesn't have any letters in the black letters
       if not self.has_grey_letters(consider):
-        possible = consider
-  #   if it contains all of the yellow letters in any position
-      elif self.matches_yellow_patterns(consider):
-        possible = consider
-  # and all of the green letters in matching positions
-      elif self.matches_green_pattern(consider):
-        possible = consider
-      else:
-        pass
-      if len(possible) > 0:
-        print(possible)
+        if not self.matches_yellow_patterns(consider):
+          if self.matches_green_pattern(consider):
+            print("Possible:", consider)
+        else:
+          print("Possible:", consider)
   #
   def solve(self):
     guess = self.print_candidates()
