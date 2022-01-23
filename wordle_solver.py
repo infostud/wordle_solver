@@ -25,6 +25,8 @@ grey, yellow, or green.""")
     print("green:", len(args.green), args.green)
   if args.guessfile:
     print("guessfile:", args.guessfile)
+  else:
+    args.guessfile = "guesses.txt"
 #
   solve = solver.Wordle_Solver(args.verbosity,
           args.grey, args.yellow, args.green, args.guessfile)
