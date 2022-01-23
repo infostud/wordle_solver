@@ -7,8 +7,8 @@ class Wordle_Solver():
     import string
     self.debug = d
 # Collection of letters not in the Wordle
-    self.black_letters = set()
-    self.black_letters.update(bl)
+    self.grey_letters = set()
+    self.grey_letters.update(bl)
 # Pattern of letters found but not in the right position
     self.yellow_patterns = yp
 # Pattern of letters found and in the right position
@@ -22,26 +22,28 @@ class Wordle_Solver():
           #print('|' + word + '|')
     self.good_list = words
 #
-  def has_black_letters(self, word):
+  def has_grey_letters(self, consider):
     found: bool = False
-    assert len(word) == WORDLE_LEN
+    assert len(consider) == WORDLE_LEN
     for i in range(0, WORDLE_LEN):
-      if word[i] in self.black_letters:
+      if consider[i] in self.grey_letters:
         found = True
+    if not found and self.debug:
+      print(consider, "grey:", self.grey_letters, "dropped")
     return found
 #
-  def matches_yellow_patterns(self, word):
+  def matches_yellow_patterns(self, consider):
     match: Bool = False
     if len(self.yellow_patterns) == 0:
       return match
     for p in self.yellow_patterns:
-      match = match or self.matches_yellow_pattern(word, p)
+      match = match or self.matches_yellow_pattern(consider, p)
     return match
 #
-  def matches_yellow_pattern(self, word, pattern):
+  def matches_yellow_pattern(self, consider, pattern):
     match: int = 0
     unique_letters: list = []
-    assert len(word) == WORDLE_LEN
+    assert len(consider) == WORDLE_LEN
     for i in range(0, WORDLE_LEN):
       if pattern[i] != '_' \
         and pattern[i] not in unique_letters:
@@ -50,52 +52,51 @@ class Wordle_Solver():
     unique_length = len(unique_letters)
     i = 0
     while i < WORDLE_LEN:
-      if word[i] == pattern[i]:
+      if consider[i] == pattern[i]:
         if self.debug:
-          print(word[i], "same", self.yellow_patterns)
-      elif word[i] in unique_letters:
+          print(consider[i], "same", self.yellow_patterns)
+      elif consider[i] in unique_letters:
         if self.debug:
-          print(word[i], "in", unique_letters)
+          print(consider[i], "in", unique_letters)
         match += 1 # found in a different position
         if self.debug:
-          print(word[i], "contained in", unique_letters)
-        del unique_letters[unique_letters.index(word[i])]
+          print(consider[i], "contained in", unique_letters)
+        del unique_letters[unique_letters.index(consider[i])]
       i += 1
     if self.debug:
-      print("Unique length", unique_length, "matches:", match)
+      print(consider, "yellow:", self.yellow_patterns, "dropped")
     return match == unique_length
 #
-  def matches_green_pattern(self, word):
+  def matches_green_pattern(self, consider):
     match: int = 0
     green_length = 0
     for i in range(0, WORDLE_LEN):
       if self.green_pattern[i] != '_':
         green_length += 1
-      if word[i] == self.green_pattern[i]:
+      if consider[i] == self.green_pattern[i]:
         match += 1
-    if self.debug:
-      print("Green length", green_length, "matches:", match)
+    if match != green_length and self.debug:
+      print(consider, "green:", self.green_pattern, "dropped")
     return match == green_length
 #
   def print_candidates(self):
     import string
+    possible = ""
     for consider in self.good_list:
-      if self.debug:
-        print("Consider:", consider)
-  # Discard a word if it contains a letter in the black letters
-      if self.has_black_letters(consider):
-        if self.debug:
-          print(self.black_letters, "black", consider + ": dropped")
-  # Keep a word if it contains all of the yellow letters in any position
+  # A word is a possible solution
+  #   if it doesn't have any letters in the black letters
+      if not self.has_grey_letters(consider):
+        possible = consider
+  #   if it contains all of the yellow letters in any position
+      elif self.matches_yellow_patterns(consider):
+        possible = consider
   # and all of the green letters in matching positions
-      elif not self.matches_yellow_patterns(consider):
-        if self.debug:
-          print(self.yellow_patterns, "yellow", consider + ": dropped")
-      elif not self.matches_green_pattern(consider):
-        if self.debug:
-          print(self.green_pattern, "green", consider + ": dropped")
+      elif self.matches_green_pattern(consider):
+        possible = consider
       else:
-        print(consider)
+        pass
+      if len(possible) > 0:
+        print(possible)
   #
   def solve(self):
     guess = self.print_candidates()
@@ -138,7 +139,7 @@ Hint: 'b' could be in position 2 or 4. You've got to guess one more letter.
     elif opt == "-d":
       debug = True
     elif opt == "-b":
-      black_letters = arg
+      grey_letters = arg
     elif opt == "-y":
       if len(arg) != WORDLE_LEN:
         print("Yellow pattern '", arg, "'length not", WORDLE_LEN)
@@ -155,7 +156,7 @@ Hint: 'b' could be in position 2 or 4. You've got to guess one more letter.
       print("Error in arguments:", argv, opts, args)
       sys.exit(2)
 #
-  wordle = Wordle_Solver(debug, black_letters, yellow_pattern,
+  wordle = Wordle_Solver(debug, grey_letters, yellow_pattern,
                          green_pattern, wordsfile)
   wordle.solve()
 #
